@@ -37,7 +37,6 @@ cces %>%
   pull(age)
 
 cces %>%
-  filter(party >= 4) %>%
   count(trump)
 
 ```
@@ -131,4 +130,27 @@ vote_forest
 1) Compare the accuracy of our three models, use bind_rows() to put the three in a nice tibble. Which model appears to be the best?
 
 2) So the randomforest model appears to be the best model, how can we test that this is true?
+
+```{r s4, echo=FALSE}
+
+logistic_predictions <- predict(logistic_fit, new_data = cces) %>%
+  bind_cols(cces) %>% 
+  accuracy(truth = trump, estimate = .pred_class)
+
+
+tree_predictions <- predict(vote_tree, new_data = cces) %>%
+  bind_cols(cces) %>% 
+  accuracy(truth = trump, estimate = .pred_class)
+
+forest_predictions <- predict(vote_forest, new_data = cces) %>%
+  bind_cols(cces) %>% 
+  accuracy(truth = trump, estimate = .pred_class)
+
+
+bind_rows(logistic_predictions, tree_predictions, forest_predictions)
+          
+
+
+```
+
 
