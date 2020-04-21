@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(infer)
 library(tidyverse)
 library(tidymodels)
+library(skimr)
 library(rpart.plot)
 
 cces <- read_rds("cces_initial.rds")
@@ -28,6 +29,20 @@ cces <- read_rds("cces_initial.rds")
 
 1) Who is the oldest person who responded to this survey?
 
+```{r s1, echo=FALSE}
+
+cces %>%
+  arrange(desc(age)) %>%
+  slice(1) %>%
+  pull(age)
+
+cces %>%
+  filter(party >= 4) %>%
+  count(trump)
+
+```
+
+
 2) What proportion of females voted for Trump? 
 
 2) Are there more Republicans or Democrats who responded?
@@ -43,6 +58,24 @@ cces <- read_rds("cces_initial.rds")
 
 2) What is the expected vote from Dom - who is Male, 37, holds a 4-year degree, asian, makes 77k, moderate who leans Democrat? (Hint: use predict())
 
+```{r s2, echo=FALSE}
+
+logistic_mod <- logistic_reg() %>%
+  set_engine("glm") 
+
+logistic_fit <- fit(logistic_mod, 
+                    trump ~ gender + age + educ + race + income + party + ideology, 
+                    data = cces)
+
+logistic_fit$fit %>%
+  tidy(conf.int = TRUE) %>%
+  select(term, estimate, conf.low, conf.high)
+
+
+
+```
+
+
 
 
 # Scene 3
@@ -52,6 +85,41 @@ cces <- read_rds("cces_initial.rds")
 1) Interpret the output of the CART model (Hint: set extra = "auto" in prp). Where would Dom fall in this decision tree and what is the predicted odd of him voting for Trump? 
 
 2) Looking at the randomForest model, what does the OOB error tell us? Interpret the first row, second column of the confusion matrix, what does that 920 represent? How does 920 relate to the class.error of 0.078?
+
+```{r s3, echo=FALSE}
+
+
+
+# CART 
+
+tree_mod <- decision_tree() %>%
+  set_engine("rpart", 
+             model = TRUE) %>%
+  set_mode("classification") 
+
+vote_tree <- fit(tree_mod,
+                 trump ~ gender + age + educ + race + income + party + ideology, 
+                 data = cces)
+
+vote_tree$fit %>%
+  prp(extra = "auto")
+
+
+
+# random forest 
+set.seed(1005)
+
+forest_mod <- rand_forest(trees = 50, mtry = 7) %>%
+  set_engine("randomForest") %>%
+  set_mode("classification")
+
+vote_forest <- fit(forest_mod, 
+                   trump ~ gender + age + educ + race + income + party + ideology, 
+                   data = cces)
+
+vote_forest
+
+```
 
 
 
